@@ -1,0 +1,5 @@
+.env
+.vagrant
+*/.vagrant
+learn-vagrant-get-started/
+en.subject.pdf

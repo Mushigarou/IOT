@@ -1,0 +1,39 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+SERVICES = {
+  'mfouadiS' => {
+    ip: '192.168.56.110'
+  },
+  'mfouadiSW' => {
+    ip: '192.168.56.111'
+  }
+} 
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu_24_server.box"
+
+  # config.vm.provider "virtualbox" do |v|
+  #   v.vm.name = 'mfouadi'
+  # #   v.memory = 512
+  # #   v.cpus = 1
+  # end
+
+  config.vm.define "mfouadiS" do |mfouadiS|
+    mfouadiS.vm.hostname = 'mfouadiS'
+    mfouadiS.vm.network 'private_network', ip: SERVICES['mfouadiS'][:ip]
+    # vitrualbox display name
+    mfouadiS.vm.provider "virtualbox" do |v|
+      v.name = "mfouadiS"
+    end
+  end
+
+  config.vm.define "mfouadiSW" do |mfouadiSW|
+    mfouadiSW.vm.hostname = 'mfouadiSW'
+    mfouadiSW.vm.network "private_network", ip: SERVICES['mfouadiSW'][:ip]
+    mfouadiS.vm.provider "virtualbox" do |v|
+      v.name = "mfouadiSW"
+    end
+  end
+
+end
