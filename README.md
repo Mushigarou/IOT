@@ -1,5 +1,38 @@
 # CI/CD
 
+## Table of Contents
+
+- [Vagrant](#vagrant)
+  - [Key Components](#key-components)
+  - [Vagrant File](#vagrant-file)
+  - [What is Vagrant?](#what-is-vagrant)
+  - [Common Commands](#common-commands)
+    - [Initialize Environment](#initialize-environment)
+    - [Start Environment](#start-environment)
+    - [Access Virtual Machine](#access-virtual-machine)
+  - [Manage Environment Lifecycle](#manage-environment-lifecycle)
+  - [Provision development environment](#provision-development-environment)
+    - [Run Provisionning Scripts](#run-provisionning-scripts)
+  - [Share resources between host and guest machines](#share-resources-between-host-and-guest-machines)
+    - [Configure port forwarding](#configure-port-forwarding)
+    - [Enable Folder Synchronization](#enable-folder-synchronization)
+  - [Manage multi-machine environments](#manage-multi-machine-environments)
+    - [Example](#example)
+- [Creating an image](#creating-an-image)
+- [Global Vagrant Box config](#global-vagrant-box-config)
+- [K3s](#k3s)
+  - [What Is K3S](#what-is-k3s)
+  - [K3S Architecture](#k3s-architecture)
+  - [Single-server Setup with an Embedded DB and High-Availability K3s](#single-server-setup-with-an-embedded-db-and-high-availability-k3s)
+  - [How Agent Node Registration Works](#how-agent-node-registration-works)
+    - [Key Components:](#key-components-1)
+    - [Important Notes:](#important-notes)
+  - [K3S Installation](#k3s-installation)
+    - [Running Installtion Script Causes](#running-installtion-script-causes)
+- [Side Notes](#side-notes)
+  - [VirtualBox & Secure Boot (BIOS)](#virtualbox--secure-boot-bios)
+- [Further](#further)
+
 ---
 
 ## Vagrant
@@ -288,9 +321,148 @@ vagrant box add 'desired_name_for_box' 'your_gzip_box'
 ```
 
 
-## Side Notes
+# K3s
 
-### VirtualBox & Secure Boot (BIOS)
+## What Is K3S
+
+K3S is lightweight kubernetes, highly available certified distribution of kubernetes, can work in a constrainted enviromenent where ressources are critical. K3S is served as a less than 70Mb binary file.
+
+Great For:
+- IOT
+- CI
+- Embeded K8S
+- Homelab
+- Edge
+- ...
+
+K3S is fully compliant with k8s with following enhancement
+- lightweight database based on sqlite3, etcd and other options are available
+- Distributed as a single binary or minimal container image
+- Packages the required dependencies for easy "batteries-included" cluster creation:
+    - containerd / cri-dockerd container runtime (CRI)
+    - Flannel Container Network Interface (CNI)
+    - CoreDNS Cluster DNS
+    - ...
+- ...
+
+## K3S Architecture
+
+- A **Server Node** is defined as a running host machine, running the command `k3s server` with a database component and control-plane managed by K3S
+- A **Agent Node** is defined as a running host machine, runnning the command `k3s agent` witout any control-plane nor a database componenent
+- Both server and agent runs container runtime, kubelet, and CNI.
+
+<img src="./assets/k3s-architecture.png">
+
+## Single-server Setup with an Embedded DB and High-Availability K3s
+
+- The server node can run with `embeded database` or `external database`
+    - `embeded database` when you have a single server node cluster
+    - `external database`when kubertnetes control-plane availibility is critical, you have multiple server nodes. You can use etcd, PostgresSQL or MySQL
+
+## How Agent Node Registration Works
+
+```mermaid
+sequenceDiagram
+    participant Agent as K3s Agent Process
+    participant LB as Client-side Load Balancer
+    participant Server as K3s Server/Supervisor
+    participant API as Kube-APIServer
+    participant K8s as Kubernetes Secrets
+
+    Note over Agent, K8s: Initial Connection & Registration
+    
+    Agent->>LB: Start websocket connection
+    LB->>Server: Connect via port 6443 (--server address)
+    Server->>LB: Accept connection
+    
+    Note over Agent, API: Endpoint Discovery
+    
+    Agent->>API: Retrieve kube-apiserver addresses
+    API->>Agent: Return service endpoint list (default namespace)
+    Agent->>LB: Add endpoints to load balancer
+    
+    Note over LB, Server: Stable Connections
+    
+    LB->>Server: Maintain connections to all servers
+    Note right of LB: Tolerates individual server outages
+    
+    Note over Agent, K8s: Authentication & Password Management
+    
+    Agent->>Agent: Generate random node password
+    Agent->>Agent: Store at /etc/rancher/node/password
+    Agent->>Server: Register with node cluster secret + password
+    Server->>K8s: Store password as Kubernetes secret
+    Note right of K8s: Stored in kube-system namespace<br/>Template: <host>.node-password.k3s
+    
+    Note over Agent, K8s: Re-registration Scenarios
+    
+    rect rgb(255, 245, 238)
+        Note over Agent, K8s: Node Cleanup Required
+        Agent->>Server: Remove /etc/rancher/node directory
+        Server->>K8s: Delete old node entry & password secret
+        Agent->>Server: Allow node to rejoin cluster
+    end
+    
+    rect rgb(238, 255, 238)
+        Note over Agent, K8s: Unique Node ID Option
+        Agent->>Agent: Launch with --with-node-id flag
+        Agent->>Agent: Append unique ID to hostname
+        Agent->>Agent: Store node ID in /etc/rancher/node/
+    end
+```
+
+### Key Components:
+
+- **Websocket Connection**: Initiated by k3s agent process
+- **Client-side Load Balancer**: Maintains endpoint list and stable connections
+- **Port 6443**: Default connection port to supervisor and kube-apiserver
+- **Password Storage**: `/etc/rancher/node/password` (agent) and `kube-system` namespace (server)
+- **Secret Template**: `<host>.node-password.k3s` format for node passwords
+
+### Important Notes:
+
+- **Node Cleanup**: Remove `/etc/rancher/node` directory and delete cluster node entry for re-registration
+- **Unique Node IDs**: Use `--with-node-id` flag for frequent hostname reuse scenarios
+- **High Availability**: Load balancer tolerates individual server outages
+
+
+## K3S Installation
+
+K3S can be installed using official install script
+- K3S can be install as a service on systemd or open rc based system
+- Download K3S binary and run it manually
+
+```bash
+# server node
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=<ip> --advertise-ip=<ip>" sh -
+
+# Agent node | `K3S_URL` causes the installer to install K3S as an agent
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=<ip>" K3S_URL=https://myserver:6443 K3S_TOKEN=mynodetoken sh -
+```
+- `--advertise-address value` (listener) IPv4/IPv6 address that apiserver uses to advertise to members of the cluster (default: node-external-ip/node-ip)
+
+- `--node-ip value, -i value` (agent/networking) IPv4/IPv6 addresses to advertise for node
+
+
+
+- Installing only the server node is considered a fully functional kubernetes cluster, with Database, control-plane, Kublet, container runtime and is ready to host a workload of pods.
+
+### Running Installtion Script Causes
+
+- Configuring K3S to restart if node crashes or restart
+- Installing Kubectl, crictl, ... and additional utilies
+- Kubeconfig is written at `/etc/rancher/k3s/k3s.yaml`, and kubectl installed by K3S will use it.
+
+- Agent will register to the server listenning on the given address
+- `K3S_TOKEN` can be found at `/var/lib/rancher/k3s/server/node-token` on your server node
+- If some machines have same name, provide K3S_NODE_NAME for each node with a unique name
+
+> Note: You may need to change permission of `/etc/rancher/k3s/k3s.yaml` `chmod 644 /etc/rancher/k3s/k3s.yaml` 
+
+
+# Side Notes
+
+## VirtualBox & Secure Boot (BIOS)
 
 **Environment:**
 - Ubuntu
@@ -310,8 +482,13 @@ sudo modprobe -r kvm_intel kvm
 
 ## Further
 
+- https://www.youtube.com/watch?v=DEqS-mqba54&ab_channel=theurbanpenguin
 - https://developer.hashicorp.com/vagrant/tutorials
 - https://developer.hashicorp.com/vagrant/docs/provisioning/ansible
 - https://kubernetes.io/docs/concepts/overview/
 - https://kubernetes.io/docs/concepts/overview/components/
 - https://kubernetes.io/docs/concepts/architecture/
+- https://docs.k3s.io/
+- https://docs.k3s.io/architecture
+- https://docs.k3s.io/quick-start#install-script
+- https://docs.k3s.io/cli/server

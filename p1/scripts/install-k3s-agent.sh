@@ -1,0 +1,1 @@
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=$SERVER_AGENT_NODE_IP" K3S_URL=$K3S_SERVER_URL K3S_TOKEN=$K3S_SERVER_TOKEN sh -

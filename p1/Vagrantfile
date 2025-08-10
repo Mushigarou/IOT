@@ -1,12 +1,26 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+def load_env_file(file_path)
+  if File.exist?(file_path)
+    File.readlines(file_path).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      key, value = line.split('=', 2)
+      ENV[key] = value if key && value
+    end
+    # puts "Loaded K3S_SERVER_TOKEN: #{ENV['K3S_SERVER_TOKEN']}"
+  else
+    puts "Warning: .env file not found at #{file_path}"
+  end
+end
+
+# Load .env file from parent directory
+load_env_file('../.env')
 
 SERVICES = {
-  'mfouadiS' => {
-    ip: '192.168.56.110'
+  "mfouadiS" => {
+    ip: ENV['SERVER_NODE_IP']
   },
   'mfouadiSW' => {
-    ip: '192.168.56.111'
+    ip: ENV['SERVER_AGENT_NODE_IP']
   }
 } 
 
@@ -20,20 +34,35 @@ Vagrant.configure("2") do |config|
   # end
 
   config.vm.define "mfouadiS" do |mfouadiS|
-    mfouadiS.vm.hostname = 'mfouadiS'
-    mfouadiS.vm.network 'private_network', ip: SERVICES['mfouadiS'][:ip]
     # vitrualbox display name
     mfouadiS.vm.provider "virtualbox" do |v|
       v.name = "mfouadiS"
     end
+
+    mfouadiS.vm.hostname = 'mfouadiS'
+    mfouadiS.vm.network 'private_network', ip: SERVICES['mfouadiS'][:ip]
+    mfouadiS.vm.provision "shell",
+      name: "common-dependencies",
+      path: "scripts/common-dependencies.sh"
+    mfouadiS.vm.provision "shell",
+      name: "install-k3s-server",
+      path: "scripts/install-k3s-server.sh"
   end
 
   config.vm.define "mfouadiSW" do |mfouadiSW|
     mfouadiSW.vm.hostname = 'mfouadiSW'
     mfouadiSW.vm.network "private_network", ip: SERVICES['mfouadiSW'][:ip]
-    mfouadiS.vm.provider "virtualbox" do |v|
+    mfouadiSW.vm.provider "virtualbox" do |v|
       v.name = "mfouadiSW"
     end
+    mfouadiSW.vm.provision "shell",
+      name: "common-dependencies",
+      path: "scripts/common-dependencies.sh"
+    mfouadiSW.vm.provision "shell",
+      name: "install-k3s-agent",
+      path: "scripts/install-k3s-agent.sh",
+      env: {"K3S_SERVER_TOKEN": ENV['K3S_SERVER_TOKEN']}
   end
 
 end
+
