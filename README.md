@@ -459,6 +459,317 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=<ip>" K3S_URL=https:/
 
 > Note: You may need to change permission of `/etc/rancher/k3s/k3s.yaml` `chmod 644 /etc/rancher/k3s/k3s.yaml` 
 
+# Connecting K3S Worker Node to Server Node
+
+This section covers the complete process of setting up a K3S cluster with a server node and worker (agent) node using Vagrant.
+
+## Overview
+
+- **Server Node (mfouadiS)**: Control plane + database + worker capabilities
+- **Worker Node (mfouadiSW)**: Agent node that joins the cluster
+- **Network**: Private network (192.168.56.0/24) for inter-node communication
+
+## Prerequisites
+
+1. **Vagrant Box**: Custom Ubuntu 24.04 server box (`ubuntu_24_server`)
+2. **VirtualBox**: As the provider
+3. **Environment Configuration**: `.env` file with cluster settings
+
+## Step-by-Step Setup
+
+### 1. Environment Configuration
+
+Create a `.env` file in the project root with the cluster configuration:
+
+```bash
+# .env file
+K3S_SERVER_TOKEN=<actual_token_from_server>
+SERVER_NODE_IP=192.168.56.110
+SERVER_AGENT_NODE_IP=192.168.56.111
+K3S_SERVER_URL=https://192.168.56.110:6443
+```
+
+> **Important**: The `K3S_SERVER_TOKEN` must be obtained from the server node after installation.
+
+### 2. Vagrantfile Configuration
+
+Configure the multi-machine environment with proper networking and provisioning:
+
+```ruby
+# Load environment variables
+def load_env_file(file_path)
+  if File.exist?(file_path)
+    File.readlines(file_path).each do |line|
+      line = line.strip
+      next if line.empty? || line.start_with?('#')
+      key, value = line.split('=', 2)
+      ENV[key] = value if key && value
+    end
+  end
+end
+
+load_env_file('../.env')
+
+SERVICES = {
+  "mfouadiS" => { ip: ENV['SERVER_NODE_IP'] },
+  'mfouadiSW' => { ip: ENV['SERVER_AGENT_NODE_IP'] }
+}
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu_24_server"
+
+  # Server Node Configuration
+  config.vm.define "mfouadiS" do |server|
+    server.vm.hostname = 'mfouadiS'
+    server.vm.network 'private_network', ip: SERVICES['mfouadiS'][:ip]
+    server.vm.provision "shell", path: "scripts/common-dependencies.sh"
+    server.vm.provision "shell", 
+      path: "scripts/install-k3s-server.sh",
+      env: {"SERVER_NODE_IP" => ENV['SERVER_NODE_IP']}
+  end
+
+  # Worker Node Configuration
+  config.vm.define "mfouadiSW" do |worker|
+    worker.vm.hostname = 'mfouadiSW'
+    worker.vm.network "private_network", ip: SERVICES['mfouadiSW'][:ip]
+    worker.vm.provision "shell", path: "scripts/common-dependencies.sh"
+    worker.vm.provision "shell",
+      path: "scripts/install-k3s-agent.sh",
+      env: {
+        "K3S_SERVER_TOKEN" => ENV['K3S_SERVER_TOKEN'],
+        "SERVER_AGENT_NODE_IP" => ENV['SERVER_AGENT_NODE_IP'],
+        "K3S_SERVER_URL" => ENV['K3S_SERVER_URL']
+      }
+  end
+end
+```
+
+### 3. Provisioning Scripts
+
+#### Common Dependencies (`scripts/common-dependencies.sh`)
+
+```bash
+#!/bin/bash
+sudo apt update
+sudo apt-get install -y iputils-ping
+
+# Create mfouadi user
+sudo useradd -m -s /bin/bash mfouadi
+echo "mfouadi:mfouadi" | sudo chpasswd
+sudo usermod -aG sudo mfouadi
+
+# Copy SSH configuration
+sudo mkdir -p /home/mfouadi/.ssh
+sudo cp /home/vagrant/.ssh/authorized_keys /home/mfouadi/.ssh/ 2>/dev/null || true
+sudo chown -R mfouadi:mfouadi /home/mfouadi/.ssh
+sudo chmod 700 /home/mfouadi/.ssh
+sudo chmod 600 /home/mfouadi/.ssh/authorized_keys 2>/dev/null || true
+
+# Allow passwordless sudo
+echo "mfouadi ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/mfouadi
+```
+
+#### Server Installation (`scripts/install-k3s-server.sh`)
+
+```bash
+#!/bin/bash
+# Install K3S server with specific node IP
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=$SERVER_NODE_IP --advertise-address=$SERVER_NODE_IP" sh -
+
+# Make kubeconfig accessible
+sudo chmod 644 /etc/rancher/k3s/k3s.yaml
+
+# Configure kubectl for mfouadi user
+sudo mkdir -p /home/mfouadi/.kube
+sudo cp /etc/rancher/k3s/k3s.yaml /home/mfouadi/.kube/config
+sudo chown mfouadi:mfouadi /home/mfouadi/.kube/config
+sudo chmod 600 /home/mfouadi/.kube/config
+```
+
+#### Agent Installation (`scripts/install-k3s-agent.sh`)
+
+```bash
+#!/bin/bash
+# Install K3S agent and join cluster
+curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=$SERVER_AGENT_NODE_IP" K3S_URL=$K3S_SERVER_URL K3S_TOKEN=$K3S_SERVER_TOKEN sh -
+
+# Wait for agent to start
+sleep 5
+
+# Configure kubectl access for both users
+sudo mkdir -p /home/mfouadi/.kube /home/vagrant/.kube
+
+# Copy server's kubeconfig and modify for remote access
+sudo tee /home/vagrant/.kube/config > /dev/null <<EOF
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: <CA_DATA_FROM_SERVER>
+    server: ${K3S_SERVER_URL}
+  name: default
+contexts:
+- context:
+    cluster: default
+    user: default
+  name: default
+current-context: default
+kind: Config
+preferences: {}
+users:
+- name: default
+  user:
+    client-certificate-data: <CLIENT_CERT_FROM_SERVER>
+    client-key-data: <CLIENT_KEY_FROM_SERVER>
+EOF
+
+sudo chown vagrant:vagrant /home/vagrant/.kube/config
+sudo chmod 600 /home/vagrant/.kube/config
+
+# Copy for mfouadi user
+sudo cp /home/vagrant/.kube/config /home/mfouadi/.kube/config
+sudo chown mfouadi:mfouadi /home/mfouadi/.kube/config
+```
+
+## Deployment Process
+
+### 1. Initial Server Setup
+
+```bash
+# Start the server node first
+vagrant up mfouadiS --provision
+
+# Get the server token (needed for agent connection)
+vagrant ssh mfouadiS -c "sudo cat /var/lib/rancher/k3s/server/node-token"
+```
+
+### 2. Update Environment with Server Token
+
+Update your `.env` file with the actual token from step 1:
+
+```bash
+K3S_SERVER_TOKEN=K10<hash>::server:<hash>
+```
+
+### 3. Start Worker Node
+
+```bash
+# Start the worker node
+vagrant up mfouadiSW --provision
+```
+
+### 4. Verify Cluster
+
+```bash
+# Check cluster status from server
+vagrant ssh mfouadiS -c "kubectl get nodes"
+
+# Check from worker (should also work)
+vagrant ssh mfouadiSW -c "kubectl get nodes"
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. **Token CA Hash Mismatch**
+```
+Error: token CA hash does not match the Cluster CA certificate hash
+```
+**Solution**: Update the `K3S_SERVER_TOKEN` in `.env` with the current token from the server.
+
+#### 2. **Authentication Errors**
+```
+Error: the server has asked for the client to provide credentials
+```
+**Solution**: Ensure kubeconfig is properly copied with correct certificates.
+
+#### 3. **Network Connectivity Issues**
+```bash
+# Test connectivity between nodes
+vagrant ssh mfouadiSW -c "ping 192.168.56.110"
+vagrant ssh mfouadiSW -c "curl -k https://192.168.56.110:6443"
+```
+
+#### 4. **Service Not Starting**
+```bash
+# Check service status
+vagrant ssh mfouadiSW -c "sudo systemctl status k3s-agent"
+vagrant ssh mfouadiS -c "sudo systemctl status k3s"
+
+# Check logs
+vagrant ssh mfouadiSW -c "sudo journalctl -u k3s-agent -f"
+```
+
+## Manual kubeconfig Setup (if needed)
+
+If kubectl authentication fails, manually set up kubeconfig:
+
+```bash
+# On worker node
+vagrant ssh mfouadiSW
+
+# Copy server's kubeconfig and modify server URL
+sudo mkdir -p /home/vagrant/.kube
+sudo tee /home/vagrant/.kube/config > /dev/null <<EOF
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: <SERVER_CA_DATA>
+    server: https://192.168.56.110:6443
+  name: default
+contexts:
+- context:
+    cluster: default
+    user: default
+  name: default
+current-context: default
+kind: Config
+preferences: {}
+users:
+- name: default
+  user:
+    client-certificate-data: <CLIENT_CERT_DATA>
+    client-key-data: <CLIENT_KEY_DATA>
+EOF
+
+sudo chown vagrant:vagrant /home/vagrant/.kube/config
+sudo chmod 600 /home/vagrant/.kube/config
+```
+
+## Verification Commands
+
+```bash
+# Check cluster nodes
+kubectl get nodes -o wide
+
+# Check node status
+kubectl describe nodes
+
+# Check system pods
+kubectl get pods -A
+
+# Test pod deployment
+kubectl run test-pod --image=nginx --port=80
+kubectl get pods
+kubectl delete pod test-pod
+```
+
+## Important Notes
+
+- **Boot Order**: Always start the server node before worker nodes
+- **Token Management**: Server token changes when server is recreated
+- **Network Requirements**: Both nodes must be on the same network segment
+- **Certificate Authority**: Worker nodes validate server certificates
+- **User Access**: Both `vagrant` and `mfouadi` users have kubectl access
+- **SSH Access**: Use `vagrant ssh <machine_name> -- -l mfouadi` for direct mfouadi login
+
+## Security Considerations
+
+- **Production**: Use proper TLS certificates instead of `insecure-skip-tls-verify`
+- **Token Storage**: Store tokens securely, not in version control
+- **Network**: Use firewalls and network policies in production
+- **Access Control**: Implement RBAC for user permissions 
+
 
 # Side Notes
 

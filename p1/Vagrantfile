@@ -6,7 +6,8 @@ def load_env_file(file_path)
       key, value = line.split('=', 2)
       ENV[key] = value if key && value
     end
-    # puts "Loaded K3S_SERVER_TOKEN: #{ENV['K3S_SERVER_TOKEN']}"
+    
+    # puts "Loaded K3S_SERVER_TOKEN: #{ENV['SERVER_NODE_IP']}"
   else
     puts "Warning: .env file not found at #{file_path}"
   end
@@ -25,7 +26,7 @@ SERVICES = {
 } 
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu_24_server.box"
+  config.vm.box = "ubuntu_24_server"
 
   # config.vm.provider "virtualbox" do |v|
   #   v.vm.name = 'mfouadi'
@@ -46,7 +47,8 @@ Vagrant.configure("2") do |config|
       path: "scripts/common-dependencies.sh"
     mfouadiS.vm.provision "shell",
       name: "install-k3s-server",
-      path: "scripts/install-k3s-server.sh"
+      path: "scripts/install-k3s-server.sh",
+      env: {"SERVER_NODE_IP" => ENV['SERVER_NODE_IP']}
   end
 
   config.vm.define "mfouadiSW" do |mfouadiSW|
@@ -61,7 +63,12 @@ Vagrant.configure("2") do |config|
     mfouadiSW.vm.provision "shell",
       name: "install-k3s-agent",
       path: "scripts/install-k3s-agent.sh",
-      env: {"K3S_SERVER_TOKEN": ENV['K3S_SERVER_TOKEN']}
+      env: {
+        "K3S_SERVER_TOKEN" => ENV['K3S_SERVER_TOKEN'],
+        "SERVER_AGENT_NODE_IP" => ENV['SERVER_AGENT_NODE_IP'],
+        "K3S_SERVER_URL" => "https://#{ENV['SERVER_NODE_IP']}:6443"
+      }
+
   end
 
 end
