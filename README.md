@@ -1,39 +1,60 @@
 # CI/CD
-
 ## Table of Contents
 
-- [Vagrant](#vagrant)
-  - [Key Components](#key-components)
-  - [Vagrant File](#vagrant-file)
-  - [What is Vagrant?](#what-is-vagrant)
-  - [Common Commands](#common-commands)
-    - [Initialize Environment](#initialize-environment)
-    - [Start Environment](#start-environment)
-    - [Access Virtual Machine](#access-virtual-machine)
-  - [Manage Environment Lifecycle](#manage-environment-lifecycle)
-  - [Provision development environment](#provision-development-environment)
-    - [Run Provisionning Scripts](#run-provisionning-scripts)
-  - [Share resources between host and guest machines](#share-resources-between-host-and-guest-machines)
-    - [Configure port forwarding](#configure-port-forwarding)
-    - [Enable Folder Synchronization](#enable-folder-synchronization)
-  - [Manage multi-machine environments](#manage-multi-machine-environments)
-    - [Example](#example)
-- [Creating an image](#creating-an-image)
-- [Global Vagrant Box config](#global-vagrant-box-config)
-- [K3s](#k3s)
-  - [What Is K3S](#what-is-k3s)
-  - [K3S Architecture](#k3s-architecture)
-  - [Single-server Setup with an Embedded DB and High-Availability K3s](#single-server-setup-with-an-embedded-db-and-high-availability-k3s)
-  - [How Agent Node Registration Works](#how-agent-node-registration-works)
-    - [Key Components:](#key-components-1)
-    - [Important Notes:](#important-notes)
-  - [K3S Installation](#k3s-installation)
-    - [Running Installtion Script Causes](#running-installtion-script-causes)
-- [Side Notes](#side-notes)
-  - [VirtualBox & Secure Boot (BIOS)](#virtualbox--secure-boot-bios)
-- [Further](#further)
+- [Part 1](#part-1)
+  - [Vagrant](#vagrant)
+    - [Key Components](#key-components)
+    - [Vagrant File](#vagrant-file)
+    - [What is Vagrant?](#what-is-vagrant)
+    - [Common Commands](#common-commands)
+      - [Initialize Environment](#initialize-environment)
+      - [Start Environment](#start-environment)
+      - [Access Virtual Machine](#access-virtual-machine)
+    - [Manage Environment Lifecycle](#manage-environment-lifecycle)
+    - [Provision development environment](#provision-development-environment)
+      - [Run Provisionning Scripts](#run-provisionning-scripts)
+    - [Share resources between host and guest machines](#share-resources-between-host-and-guest-machines)
+      - [Configure port forwarding](#configure-port-forwarding)
+      - [Enable Folder Synchronization](#enable-folder-synchronization)
+    - [Manage multi-machine environments](#manage-multi-machine-environments)
+      - [Example](#example)
+    - [Creating an image](#creating-an-image)
+    - [Global Vagrant Box config](#global-vagrant-box-config)
+  - [K3s](#k3s)
+    - [What Is K3S](#what-is-k3s)
+    - [K3S Architecture](#k3s-architecture)
+    - [Single-server Setup with an Embedded DB and High-Availability K3s](#single-server-setup-with-an-embedded-db-and-high-availability-k3s)
+    - [How Agent Node Registration Works](#how-agent-node-registration-works)
+      - [Key Components](#key-components-1)
+      - [Important Notes](#important-notes)
+    - [K3S Installation](#k3s-installation)
+      - [Running Installtion Script Causes](#running-installtion-script-causes)
+    - [Connecting K3S Worker Node to Server Node](#connecting-k3s-worker-node-to-server-node)
+      - [Overview](#overview)
+      - [Prerequisites](#prerequisites)
+      - [Step-by-Step Setup](#step-by-step-setup)
+        - [1. Environment Configuration](#1-environment-configuration)
+        - [2. Vagrantfile Configuration](#2-vagrantfile-configuration)
+        - [3. Provisioning Scripts](#3-provisioning-scripts)
+      - [Deployment Process](#deployment-process)
+      - [Deployment Process](#deployment-process)
+        - [1. Initial Server Setup](#1-initial-server-setup)
+        - [2. Update Environment with Server Token](#2-update-environment-with-server-token)
+        - [3. Start Worker Node](#3-start-worker-node)
+        - [4. Verify Cluster](#4-verify-cluster)
+      - [Troubleshooting](#troubleshooting)
+        - [Common Issues and Solutions](#common-issues-and-solutions)
+      - [Manual kubeconfig Setup (if needed)](#manual-kubeconfig-setup-if-needed)
+      - [Verification Commands](#verification-commands)
+      - [Important Notes](#important-notes-1)
+      - [Security Considerations](#security-considerations)
+  - [Side Notes](#side-notes)
+    - [VirtualBox & Secure Boot (BIOS)](#virtualbox--secure-boot-bios)
+  - [Further](#further)
 
 ---
+
+# Part 1
 
 ## Vagrant
 
@@ -240,7 +261,7 @@ end
 
 --- 
 
-## Creating an image
+### Creating an image
 
 - Minimal ubuntu server
 - port mapping for ssh
@@ -309,7 +330,7 @@ history -w
 
 ---
 
-## Global Vagrant Box config
+### Global Vagrant Box config
 
 ```bash
 sudo mkdir -p /opt/vagrant/boxes
@@ -321,9 +342,9 @@ vagrant box add 'desired_name_for_box' 'your_gzip_box'
 ```
 
 
-# K3s
+## K3s
 
-## What Is K3S
+### What Is K3S
 
 K3S is lightweight kubernetes, highly available certified distribution of kubernetes, can work in a constrainted enviromenent where ressources are critical. K3S is served as a less than 70Mb binary file.
 
@@ -345,7 +366,7 @@ K3S is fully compliant with k8s with following enhancement
     - ...
 - ...
 
-## K3S Architecture
+### K3S Architecture
 
 - A **Server Node** is defined as a running host machine, running the command `k3s server` with a database component and control-plane managed by K3S
 - A **Agent Node** is defined as a running host machine, runnning the command `k3s agent` witout any control-plane nor a database componenent
@@ -353,13 +374,13 @@ K3S is fully compliant with k8s with following enhancement
 
 <img src="./assets/k3s-architecture.png">
 
-## Single-server Setup with an Embedded DB and High-Availability K3s
+### Single-server Setup with an Embedded DB and High-Availability K3s
 
 - The server node can run with `embeded database` or `external database`
     - `embeded database` when you have a single server node cluster
     - `external database`when kubertnetes control-plane availibility is critical, you have multiple server nodes. You can use etcd, PostgresSQL or MySQL
 
-## How Agent Node Registration Works
+### How Agent Node Registration Works
 
 ```mermaid
 sequenceDiagram
@@ -426,7 +447,7 @@ sequenceDiagram
 - **High Availability**: Load balancer tolerates individual server outages
 
 
-## K3S Installation
+### K3S Installation
 
 K3S can be installed using official install script
 - K3S can be install as a service on systemd or open rc based system
@@ -459,25 +480,25 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=<ip>" K3S_URL=https:/
 
 > Note: You may need to change permission of `/etc/rancher/k3s/k3s.yaml` `chmod 644 /etc/rancher/k3s/k3s.yaml` 
 
-# Connecting K3S Worker Node to Server Node
+### Connecting K3S Worker Node to Server Node
 
 This section covers the complete process of setting up a K3S cluster with a server node and worker (agent) node using Vagrant.
 
-## Overview
+#### Overview
 
 - **Server Node (mfouadiS)**: Control plane + database + worker capabilities
 - **Worker Node (mfouadiSW)**: Agent node that joins the cluster
 - **Network**: Private network (192.168.56.0/24) for inter-node communication
 
-## Prerequisites
+#### Prerequisites
 
 1. **Vagrant Box**: Custom Ubuntu 24.04 server box (`ubuntu_24_server`)
 2. **VirtualBox**: As the provider
 3. **Environment Configuration**: `.env` file with cluster settings
 
-## Step-by-Step Setup
+#### Step-by-Step Setup
 
-### 1. Environment Configuration
+##### 1. Environment Configuration
 
 Create a `.env` file in the project root with the cluster configuration:
 
@@ -491,7 +512,7 @@ K3S_SERVER_URL=https://192.168.56.110:6443
 
 > **Important**: The `K3S_SERVER_TOKEN` must be obtained from the server node after installation.
 
-### 2. Vagrantfile Configuration
+##### 2. Vagrantfile Configuration
 
 Configure the multi-machine environment with proper networking and provisioning:
 
@@ -544,9 +565,9 @@ Vagrant.configure("2") do |config|
 end
 ```
 
-### 3. Provisioning Scripts
+##### 3. Provisioning Scripts
 
-#### Common Dependencies (`scripts/common-dependencies.sh`)
+###### Common Dependencies (`scripts/common-dependencies.sh`)
 
 ```bash
 #!/bin/bash
@@ -554,7 +575,7 @@ sudo apt update
 sudo apt-get install -y iputils-ping
 ```
 
-#### Server Installation (`scripts/install-k3s-server.sh`)
+###### Server Installation (`scripts/install-k3s-server.sh`)
 
 ```bash
 #!/bin/bash
@@ -565,7 +586,7 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=$SERVER_NODE_IP --adv
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
 ```
 
-#### Agent Installation (`scripts/install-k3s-agent.sh`)
+###### Agent Installation (`scripts/install-k3s-agent.sh`)
 
 ```bash
 #!/bin/bash
@@ -602,9 +623,9 @@ users:
 EOF
 ```
 
-## Deployment Process
+#### Deployment Process
 
-### 1. Initial Server Setup
+##### 1. Initial Server Setup
 
 ```bash
 # Start the server node first
@@ -614,7 +635,7 @@ vagrant up mfouadiS --provision
 vagrant ssh mfouadiS -c "sudo cat /var/lib/rancher/k3s/server/node-token"
 ```
 
-### 2. Update Environment with Server Token
+##### 2. Update Environment with Server Token
 
 Update your `.env` file with the actual token from step 1:
 
@@ -622,14 +643,14 @@ Update your `.env` file with the actual token from step 1:
 K3S_SERVER_TOKEN=K10<hash>::server:<hash>
 ```
 
-### 3. Start Worker Node
+##### 3. Start Worker Node
 
 ```bash
 # Start the worker node
 vagrant up mfouadiSW --provision
 ```
 
-### 4. Verify Cluster
+##### 4. Verify Cluster
 
 ```bash
 # Check cluster status from server
@@ -639,30 +660,30 @@ vagrant ssh mfouadiS -c "kubectl get nodes"
 vagrant ssh mfouadiSW -c "kubectl get nodes"
 ```
 
-## Troubleshooting
+#### Troubleshooting
 
-### Common Issues and Solutions
+##### Common Issues and Solutions
 
-#### 1. **Token CA Hash Mismatch**
+###### 1. **Token CA Hash Mismatch**
 ```
 Error: token CA hash does not match the Cluster CA certificate hash
 ```
 **Solution**: Update the `K3S_SERVER_TOKEN` in `.env` with the current token from the server.
 
-#### 2. **Authentication Errors**
+###### 2. **Authentication Errors**
 ```
 Error: the server has asked for the client to provide credentials
 ```
 **Solution**: Ensure kubeconfig is properly copied with correct certificates.
 
-#### 3. **Network Connectivity Issues**
+###### 3. **Network Connectivity Issues**
 ```bash
 # Test connectivity between nodes
 vagrant ssh mfouadiSW -c "ping 192.168.56.110"
 vagrant ssh mfouadiSW -c "curl -k https://192.168.56.110:6443"
 ```
 
-#### 4. **Service Not Starting**
+###### 4. **Service Not Starting**
 ```bash
 # Check service status
 vagrant ssh mfouadiSW -c "sudo systemctl status k3s-agent"
@@ -672,7 +693,7 @@ vagrant ssh mfouadiS -c "sudo systemctl status k3s"
 vagrant ssh mfouadiSW -c "sudo journalctl -u k3s-agent -f"
 ```
 
-## Manual kubeconfig Setup (if needed)
+#### Manual kubeconfig Setup (if needed)
 
 If kubectl authentication fails, manually set up kubeconfig:
 
@@ -708,7 +729,7 @@ sudo chown vagrant:vagrant /home/vagrant/.kube/config
 sudo chmod 600 /home/vagrant/.kube/config
 ```
 
-## Verification Commands
+#### Verification Commands
 
 ```bash
 # Check cluster nodes
@@ -726,7 +747,7 @@ kubectl get pods
 kubectl delete pod test-pod
 ```
 
-## Important Notes
+#### Important Notes
 
 - **Boot Order**: Always start the server node before worker nodes
 - **Token Management**: Server token changes when server is recreated
@@ -735,7 +756,7 @@ kubectl delete pod test-pod
 - **User Access**: The `vagrant` user has kubectl access
 - **SSH Access**: Use `vagrant ssh <machine_name>` to access the VMs
 
-## Security Considerations
+#### Security Considerations
 
 - **Production**: Use proper TLS certificates instead of `insecure-skip-tls-verify`
 - **Token Storage**: Store tokens securely, not in version control
@@ -743,9 +764,9 @@ kubectl delete pod test-pod
 - **Access Control**: Implement RBAC for user permissions 
 
 
-# Side Notes
+## Side Notes
 
-## VirtualBox & Secure Boot (BIOS)
+### VirtualBox & Secure Boot (BIOS)
 
 **Environment:**
 - Ubuntu
@@ -762,16 +783,17 @@ sudo modprobe -r kvm_intel kvm
 > _Note: KVM may reload after reboot._
 
 ---
+### Further Reading
 
-## Further
-
-- https://www.youtube.com/watch?v=DEqS-mqba54&ab_channel=theurbanpenguin
-- https://developer.hashicorp.com/vagrant/tutorials
-- https://developer.hashicorp.com/vagrant/docs/provisioning/ansible
-- https://kubernetes.io/docs/concepts/overview/
-- https://kubernetes.io/docs/concepts/overview/components/
-- https://kubernetes.io/docs/concepts/architecture/
-- https://docs.k3s.io/
-- https://docs.k3s.io/architecture
-- https://docs.k3s.io/quick-start#install-script
-- https://docs.k3s.io/cli/server
+- [Creating a Base Box](https://developer.hashicorp.com/vagrant/docs/providers/virtualbox/boxes "Vagrant VirtualBox Boxes Documentation")
+- [Vagrant Tutorial Video by The Urban Penguin](https://www.youtube.com/watch?v=DEqS-mqba54&ab_channel=theurbanpenguin "Vagrant Tutorial Video")
+- [Vagrant Tutorials](https://developer.hashicorp.com/vagrant/tutorials "Vagrant Tutorials")
+- [Vagrant Ansible Provisioning](https://developer.hashicorp.com/vagrant/docs/provisioning/ansible "Vagrant Ansible Provisioning")
+- [Kubernetes Concepts Overview](https://kubernetes.io/docs/concepts/overview/ "Kubernetes Concepts Overview")
+- [Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/ "Kubernetes Components")
+- [Kubernetes Architecture](https://kubernetes.io/docs/concepts/architecture/ "Kubernetes Architecture")
+- [K3s Documentation](https://docs.k3s.io/ "K3s Documentation")
+- [K3s Architecture](https://docs.k3s.io/architecture "K3s Architecture")
+- [K3s Quick Start Install Script](https://docs.k3s.io/quick-start#install-script "K3s Quick Start Install Script")
+- [K3s Server CLI Reference](https://docs.k3s.io/cli/server "K3s Server CLI Reference")
+- https://unix.stackexchange.com/questions/134483/why-is-my-ethernet-interface-called-enp0s10-instead-of-eth0
