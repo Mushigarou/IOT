@@ -32,11 +32,3 @@ users:
   user:
     token: ${K3S_SERVER_TOKEN}
 EOF
-
-sudo chown mfouadi:mfouadi /home/mfouadi/.kube/config
-sudo chmod 600 /home/mfouadi/.kube/config
-
-# Also create a copy for vagrant user
-sudo mkdir -p /home/vagrant/.kube
-sudo cp /home/mfouadi/.kube/config /home/vagrant/.kube/config
-sudo chown vagrant:vagrant /home/vagrant/.kube/config

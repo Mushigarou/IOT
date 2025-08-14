@@ -552,21 +552,6 @@ end
 #!/bin/bash
 sudo apt update
 sudo apt-get install -y iputils-ping
-
-# Create mfouadi user
-sudo useradd -m -s /bin/bash mfouadi
-echo "mfouadi:mfouadi" | sudo chpasswd
-sudo usermod -aG sudo mfouadi
-
-# Copy SSH configuration
-sudo mkdir -p /home/mfouadi/.ssh
-sudo cp /home/vagrant/.ssh/authorized_keys /home/mfouadi/.ssh/ 2>/dev/null || true
-sudo chown -R mfouadi:mfouadi /home/mfouadi/.ssh
-sudo chmod 700 /home/mfouadi/.ssh
-sudo chmod 600 /home/mfouadi/.ssh/authorized_keys 2>/dev/null || true
-
-# Allow passwordless sudo
-echo "mfouadi ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/mfouadi
 ```
 
 #### Server Installation (`scripts/install-k3s-server.sh`)
@@ -578,12 +563,6 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=$SERVER_NODE_IP --adv
 
 # Make kubeconfig accessible
 sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-
-# Configure kubectl for mfouadi user
-sudo mkdir -p /home/mfouadi/.kube
-sudo cp /etc/rancher/k3s/k3s.yaml /home/mfouadi/.kube/config
-sudo chown mfouadi:mfouadi /home/mfouadi/.kube/config
-sudo chmod 600 /home/mfouadi/.kube/config
 ```
 
 #### Agent Installation (`scripts/install-k3s-agent.sh`)
@@ -596,8 +575,8 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=$SERVER_AGENT_NODE_IP
 # Wait for agent to start
 sleep 5
 
-# Configure kubectl access for both users
-sudo mkdir -p /home/mfouadi/.kube /home/vagrant/.kube
+# Configure kubectl access for vagrant user
+sudo mkdir -p /home/vagrant/.kube
 
 # Copy server's kubeconfig and modify for remote access
 sudo tee /home/vagrant/.kube/config > /dev/null <<EOF
@@ -621,13 +600,6 @@ users:
     client-certificate-data: <CLIENT_CERT_FROM_SERVER>
     client-key-data: <CLIENT_KEY_FROM_SERVER>
 EOF
-
-sudo chown vagrant:vagrant /home/vagrant/.kube/config
-sudo chmod 600 /home/vagrant/.kube/config
-
-# Copy for mfouadi user
-sudo cp /home/vagrant/.kube/config /home/mfouadi/.kube/config
-sudo chown mfouadi:mfouadi /home/mfouadi/.kube/config
 ```
 
 ## Deployment Process
@@ -760,8 +732,8 @@ kubectl delete pod test-pod
 - **Token Management**: Server token changes when server is recreated
 - **Network Requirements**: Both nodes must be on the same network segment
 - **Certificate Authority**: Worker nodes validate server certificates
-- **User Access**: Both `vagrant` and `mfouadi` users have kubectl access
-- **SSH Access**: Use `vagrant ssh <machine_name> -- -l mfouadi` for direct mfouadi login
+- **User Access**: The `vagrant` user has kubectl access
+- **SSH Access**: Use `vagrant ssh <machine_name>` to access the VMs
 
 ## Security Considerations
 
