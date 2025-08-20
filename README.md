@@ -374,6 +374,31 @@ K3S is fully compliant with k8s with following enhancement
 
 <img src="./assets/k3s-architecture.png">
 
+#### K3s Server Components:
+
+- **Supervisor**: Central orchestrator that manages and coordinates all server-side components and handles cluster initialization
+- **API Server**: Kubernetes control plane component that exposes the Kubernetes API and serves as the frontend for the cluster
+- **Kube Proxy**: Network proxy that maintains network rules and enables service discovery and load balancing across pods
+- **Scheduler**: Assigns newly created pods to available nodes based on resource requirements and constraints
+- **Controller Manager**: Runs controller processes that regulate the state of the cluster (node, replication, endpoints controllers)
+- **Kubelet**: Node agent that communicates with the API server and manages pod lifecycle on the server node
+- **Flannel**: Container Network Interface (CNI) plugin that provides overlay networking between pods across nodes
+- **Kine**: Lightweight datastore interface that can use SQLite (embedded) or external databases (etcd, PostgreSQL, MySQL)
+- **containerd**: Container runtime that manages the complete container lifecycle (pulling images, creating, starting, stopping containers)
+
+#### K3s Agent Components:
+
+- **Tunnel Proxy**: Establishes secure connection to the server and handles communication tunneling between agent and server
+- **Kube Proxy**: Same as server - maintains network rules for service discovery and load balancing on the agent node
+- **Kubelet**: Node agent that manages pod lifecycle on the agent node and reports node status to the control plane
+- **Flannel**: CNI plugin that provides pod-to-pod networking and integrates with the cluster-wide network overlay
+- **containerd**: Container runtime for managing containers on the agent node
+
+#### Shared Infrastructure:
+
+- **Pods**: Smallest deployable units containing one or more containers, scheduled across both server and agent nodes
+- **Process**: K3s runs as a single binary process on each node, simplifying deployment and management
+
 ### Single-server Setup with an Embedded DB and High-Availability K3s
 
 - The server node can run with `embeded database` or `external database`
@@ -783,6 +808,24 @@ sudo modprobe -r kvm_intel kvm
 > _Note: KVM may reload after reboot._
 
 ---
+
+
+# Part 2
+
+## Using kubectl to Create a Deployment
+
+
+
+
+# Video Notes
+
+https://www.youtube.com/watch?v=ePyFJ7Hd57Q&t=23s&ab_channel=GOTOConferences
+
+- https://fluxcd.io/ : Automating GitOps / Deployment
+- https://github.com/bitnami-labs/sealed-secrets : Managing Secrets
+
+
+
 ### Further Reading
 
 - [Creating a Base Box](https://developer.hashicorp.com/vagrant/docs/providers/virtualbox/boxes "Vagrant VirtualBox Boxes Documentation")
@@ -797,3 +840,12 @@ sudo modprobe -r kvm_intel kvm
 - [K3s Quick Start Install Script](https://docs.k3s.io/quick-start#install-script "K3s Quick Start Install Script")
 - [K3s Server CLI Reference](https://docs.k3s.io/cli/server "K3s Server CLI Reference")
 - https://unix.stackexchange.com/questions/134483/why-is-my-ethernet-interface-called-enp0s10-instead-of-eth0
+- https://www.ruby-lang.org/en/documentation/quickstart/
+
+#### Part 2
+- https://kubernetes.io/docs/tutorials/kubernetes-basics/expose/expose-intro/
+- https://kubernetes.io/docs/tutorials/kubernetes-basics/deploy-app/
+
+### Others
+
+- https://github.com/canonical/multipass : 
