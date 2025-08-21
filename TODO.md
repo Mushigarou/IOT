@@ -1,16 +1,21 @@
-# BUGS
 
-### Description
+# p2
+- add checks 
+    - k3s installed
+    - KUBECONFIG already in .zshrc
 
-- Internal-IP in output of `kubectl get nodes -o wide`
 
-```bash
-vagrant@mfouadiS:~$ kubectl get nodes -o wide
-NAME        STATUS   ROLES                  AGE     VERSION        INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
-mfouadis    Ready    control-plane,master   115m    v1.33.3+k3s1   10.0.2.15     <none>        Ubuntu 24.04.2 LTS   6.8.0-64-generic   containerd://2.0.5-k3s2
-mfouadisw   Ready    <none>                 4m20s   v1.33.3+k3s1   10.0.2.15     <none>        Ubuntu 24.04.2 LTS   6.8.0-64-generic   containerd://2.0.5-k3s2
+- Persistent Environment Variables within the Guest (Shell or File Provisioner):
+To make environment variables available consistently within the guest machine, even after provisioning, they need to be written to a file that is sourced upon login or system startup.
+a. Using a Shell Provisioner to write to /etc/profile.d/:
+Code
+
+``` ruby
+Vagrant.configure("2") do |config|
+  config.vm.provision :shell, inline: <<-SHELL
+    echo 'export MY_PERSISTENT_VAR="my_persistent_value"' | sudo tee /etc/profile.d/myvars.sh
+    echo 'export ANOTHER_PERSISTENT_VAR="another_persistent_value"' | sudo tee -a /etc/profile.d/myvars.sh
+  SHELL
+end
 ```
-
-### Expected
-
-Machines IP adresses 
+This creates a file in /etc/profile.d/ which is automatically sourced by many Linux distributions for interactive shells.

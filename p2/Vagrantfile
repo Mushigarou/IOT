@@ -17,13 +17,7 @@ SERVICES = {
 
 # puts ENV['SERVER_NODE_IP'], '<-- ENV --', SERVICES['mfouadiS'][:ip], '<-- SERVICES --'
 
-$install_k3s_script=<<-SCRIPT
-  curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--node-ip=#{SERVICES['mfouadiS'][:ip]} --advertise-address=#{SERVICES['mfouadiS'][:ip]}" sh -
-  
-  if [ -e /etc/rancher/k3s/k3s.yaml ]; then
-    sudo chmod 644 /etc/rancher/k3s/k3s.yaml
-  fi
-SCRIPT
+
 
 Vagrant.configure("2") do |config|
   config.vm.hostname = "mfouadiS"
@@ -36,10 +30,12 @@ Vagrant.configure("2") do |config|
     vm.memory = 512
   end
 
+  config.vm.network "forwarded_port", guest: 8001, host: 8001
+
   config.vm.network "private_network", ip: SERVICES['mfouadiS'][:ip] 
 
   config.vm.provision "shell",
     name: "init-environment",
-    inline: $install_k3s_script
+    path: "./scripts/init.sh"
 
 end

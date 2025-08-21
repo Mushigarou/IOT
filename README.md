@@ -814,7 +814,38 @@ sudo modprobe -r kvm_intel kvm
 
 ## Using kubectl to Create a Deployment
 
+By default, kubectl looks for a file named config in the $HOME/.kube directory. You can specify other kubeconfig files by setting the KUBECONFIG environment variable or by setting the --kubeconfig flag.
 
+
+- The common format of a kubectl command is: `kubectl action resource`. You can add --help. 
+
+
+### Deployements Steps 
+
+1 - `kubectl create deployment`  provide the deployment name and app image location. `--image=`.
+
+2 - `kubectl get deployments`
+
+3 - `kubectl proxy` is mainly for accessing the Kubernetes API, not for exposing your application to the public internet. For that, you'll typically use Services of type NodePort, LoadBalancer, or Ingress. "kubectl proxy" does not expose Pods directly; it exposes the Kubernetes API server locally, allowing you to access cluster resources (including Pods) via the API from your local machine.
+
+>Note: if your running cluster in a VM:
+> forward port you app from guest to host
+> add `--address=0.0.0.0` and `--accept-hosts='.*'` options to `kubectl proxy`. So, Kubectl doesn't listen only locally inside guest machine
+
+4 - curl your app
+
+5 - Accessing Pod, based on POD name 
+```bash
+# First we need to get the Pod name, and we'll store it in the environment variable POD_NAME.
+export POD_NAME=$(kubectl get pods -o go-template --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+echo Name of the Pod: $POD_NAME
+# You can access the Pod through the proxied API, by running:
+curl http://localhost:8001/api/v1/namespaces/default/pods/$POD_NAME:8080/proxy/
+
+```
+
+
+>Note: The API Server automatically creates an endpoint for each pods, based on pod' s name. That is also accessible through the proxy
 
 
 # Video Notes
@@ -849,3 +880,4 @@ https://www.youtube.com/watch?v=ePyFJ7Hd57Q&t=23s&ab_channel=GOTOConferences
 ### Others
 
 - https://github.com/canonical/multipass : 
+- https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
