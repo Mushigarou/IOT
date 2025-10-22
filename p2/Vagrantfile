@@ -17,8 +17,6 @@ SERVICES = {
 
 # puts ENV['SERVER_NODE_IP'], '<-- ENV --', SERVICES['mfouadiS'][:ip], '<-- SERVICES --'
 
-
-
 Vagrant.configure("2") do |config|
   config.vm.hostname = "mfouadiS"
   config.vm.box = "ubuntu_24_server"
@@ -27,6 +25,7 @@ Vagrant.configure("2") do |config|
     vm.name = "mfouadiS"
     vm.customize ["modifyvm", :id, "--name", "mfouadiS"]
     vm.cpus = 1
+end
     vm.memory = 512
   end
 

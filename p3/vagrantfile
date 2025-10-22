@@ -1,0 +1,22 @@
+NODE_SERVER_NAME = "k3d"
+NODE_SERVER_IP = '192.168.56.115'
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "centos/stream10"
+  config.vm.box_version = "20251020.0"
+  
+  config.vm.provider "virtualbox" do |vm|
+    vm.name = NODE_SERVER_NAME
+    vm.customize ["modifyvm", :id, "--name", NODE_SERVER_NAME]
+  end
+
+  config.vm.define NODE_SERVER_NAME do |node|
+    node.vm.hostname = NODE_SERVER_NAME
+    node.vm.network "private_network", ip: NODE_SERVER_IP
+    node.vm.provider "virtualbox" do |v|
+      v.name = NODE_SERVER_NAME
+    end
+  
+  end
+
+end
