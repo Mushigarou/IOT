@@ -13,14 +13,15 @@ Vagrant.configure("2") do |config|
   config.vm.define NODE_SERVER_NAME do |node|
     node.vm.hostname = NODE_SERVER_NAME
     node.vm.network "private_network", ip: NODE_SERVER_IP
-    node.vm.network "forwarded_port", host: 28948, guest: 8080
+    node.vm.network "forwarded_port", host: 28900, guest: 8080
+    node.vm.synced_folder ".", "/home/vagrant/app"
     node.vm.provider "virtualbox" do |v|
       v.name = NODE_SERVER_NAME
       v.memory = 2048
       v.cpus = 2
     end
   end
-
+  
   config.vm.provision "shell",
     name: "init environement",
     path: "./scripts/init.sh" 
