@@ -36,5 +36,4 @@ end
   config.vm.provision "shell",
     name: "init-environment",
     path: "./scripts/init.sh"
-
 end
