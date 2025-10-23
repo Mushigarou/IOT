@@ -16,7 +16,7 @@ echo 'export PATH=/usr/local/bin:$PATH' >> /home/vagrant/.bashrc
 # In docker rootless mode creation of a cluster needs KubeletInUserNamespace=true to be activated
 # k3d cluster create --k3s-arg '--kubelet-arg=feature-gates=KubeletInUserNamespace=true@server:*' mfouadiCI
 log "Creating cluster mfouadiCI"
-k3d cluster create mfouadiCI
+k3d cluster create -p "8085:80@loadbalancer"
 
 # Copy kubeconfig to vagrant user
 mkdir -p /home/vagrant/.kube
@@ -47,10 +47,21 @@ if ! command -v argocd &> /dev/null; then
     rm argocd-linux-amd64
 fi
 
-kubectl port-forward --address=0.0.0.0 svc/argocd-server -n argocd 8080:443 r
+# kubectl port-forward --address=0.0.0.0 svc/argocd-server -n argocd 8080:443 r
 
 argocd admin initial-password -n argocd
 
+kubectl config set-context --current --namespace=dev
+
+export KUBECONFIG="$(k3d kubeconfig write mfouadiCI)"
+kubectl apply -f /home/vagrant/app/confs/deploy.yaml
+kubectl create service clusterip will42 --tcp=80:80
+kubectl apply -f app/confs/ingress.yaml 
+
+
+# kubectl apply -f /home/vagrant/app/confs/deploy.yaml
+# kubectl create service clusterip will42 --tcp=80:80 -n dev
+# kubectl apply -f /home/vagrant/app/confs/ingress.yaml" -n dev
 
 # # configure CLI access talk directly to kube API server instead of argocd API server 
 # argocd login --core

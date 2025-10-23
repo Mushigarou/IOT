@@ -13,6 +13,7 @@ if ! command -v docker &> /dev/null; then
     sudo sh ./get-docker.sh
     sudo systemctl enable docker
     sudo systemctl start docker
+    sudo usermod -aG docker vagrant
 
     # https://docs.docker.com/engine/security/rootless/
     # run docker service and daemon in rootless mode (for testing purposes not for prod)
