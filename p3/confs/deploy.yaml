@@ -2,21 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: will42
-  name: will42
+    app: nginx-test
+  name: nginx-test
   namespace: dev
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: will42
+      app: nginx-test
   template:
     metadata:
       labels:
-        app: will42
+        app: nginx-test
     spec:
       containers:
       - image: nginx
-        name: will42
+        name: nginx-test
         # ports:
         # - containerPort: 80
