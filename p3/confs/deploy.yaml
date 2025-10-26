@@ -1,22 +1,45 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: nginx-test
-  name: nginx-test
-  namespace: dev
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: nginx-test
-  template:
-    metadata:
-      labels:
-        app: nginx-test
-    spec:
-      containers:
-      - image: nginx
-        name: nginx-test
-        # ports:
-        # - containerPort: 80
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   labels:
+#     app: nginx-test
+#   name: nginx-test
+#   namespace: dev
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels:
+#       app: nginx-test
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-test
+#     spec:
+#       containers:
+#       - image: nginx
+#         name: nginx-test
+#         # ports:
+#         # - containerPort: 80
+
+---
+
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: my-application # Name of your Argo CD application
+#   namespace: argocd # Namespace where Argo CD is installed (usually 'argocd')
+# spec:
+#   project: default # The Argo CD project your application belongs to
+#   source:
+#     repoURL: https://github.com/your-org/your-repo.git # URL of your Git repository
+#     targetRevision: HEAD # Branch or tag to deploy (e.g., 'main', 'v1.0')
+#     path: k8s-manifests # Path within the repository containing your Kubernetes manifests
+#   destination:
+#     server: https://kubernetes.default.svc # The Kubernetes API server URL
+#     namespace: my-app-namespace # The namespace in the target cluster where your app will be deployed
+#   syncPolicy:
+#     automated:
+#       prune: true # Delete resources not defined in Git
+#       selfHeal: true # Revert any manual changes to match Git state
+#     syncOptions:
+#       - CreateNamespace=true # Automatically create the destination namespace if it doesn't exist

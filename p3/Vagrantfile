@@ -15,6 +15,7 @@ Vagrant.configure("2") do |config|
     node.vm.network "private_network", ip: NODE_SERVER_IP
     node.vm.network "forwarded_port", host: 8085, guest: 8085
     node.vm.network "forwarded_port", host: 8080, guest: 8080
+    # vagrant plugin install vagrant-vbguest
     node.vm.synced_folder ".", "/home/vagrant/app"
     node.vm.provider "virtualbox" do |v|
       v.name = NODE_SERVER_NAME
