@@ -20,7 +20,7 @@ k3d cluster delete mfouadiCI --yes 2>/dev/null || true
 # https://github.com/NixOS/nixpkgs/issues/385044
 # In docker rootless mode creation of a cluster needs KubeletInUserNamespace=true to be activated
 log "Creating cluster mfouadiCI"
-k3d cluster create mfouadiCI -p "8080:80@loadbalancer" -p "8443:443@loadbalancer"
+k3d cluster create mfouadiCI -p "8080:80@loadbalancer" -p "8443:443@loadbalancer" -p "8085:80@loadbalancer"
 
 # Copy kubeconfig to vagrant user
 mkdir -p /home/vagrant/.kube
@@ -62,7 +62,6 @@ kubectl config set-context --current --namespace=dev
 
 export KUBECONFIG="$(k3d kubeconfig write mfouadiCI)"
 kubectl apply -f /home/vagrant/app/confs/deploy.yaml
-kubectl create service clusterip nginx-test --tcp=80:80
 kubectl apply -f app/confs/ingress.yaml
 
 

@@ -19,6 +19,29 @@
 #             port:
 #               number: 80
 
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: will42
+  labels:
+    app: will42
+  namespace: dev
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: traefik
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: will42
+            port:
+              number: 8085
+
 ---
 
 apiVersion: networking.k8s.io/v1
@@ -34,7 +57,7 @@ spec:
   rules:
   - http:
       paths:
-      - path: /
+      - path: /argocd
         pathType: Prefix
         backend:
           service:
