@@ -1,62 +1,30 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: will42
-  name: will42
-  namespace: dev
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: will42
-  template:
-    metadata:
-      labels:
-        app: will42
-    spec:
-      containers:
-      - image: wil42/playground:v1
-        name: will42
-        ports:
-        - containerPort: 8888
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: 
 
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: will42
-  name: will42
-  namespace: dev
-spec:
-  ports:
-  - name: 8085-8888
-    port: 8085
-    protocol: TCP
-    targetPort: 8888
-  selector:
-    app: will42
-  type: ClusterIP
 
 # apiVersion: argoproj.io/v1alpha1
 # kind: Application
 # metadata:
-#   name: my-application # Name of your Argo CD application
-#   namespace: argocd # Namespace where Argo CD is installed (usually 'argocd')
+
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+  # name: my-application # Name of your Argo CD application
+  # namespace: argocd # Namespace where Argo CD is installed (usually 'argocd')
 # spec:
-#   project: default # The Argo CD project your application belongs to
-#   source:
-#     repoURL: https://github.com/your-org/your-repo.git # URL of your Git repository
-#     targetRevision: HEAD # Branch or tag to deploy (e.g., 'main', 'v1.0')
-#     path: k8s-manifests # Path within the repository containing your Kubernetes manifests
-#   destination:
-#     server: https://kubernetes.default.svc # The Kubernetes API server URL
-#     namespace: my-app-namespace # The namespace in the target cluster where your app will be deployed
-#   syncPolicy:
-#     automated:
-#       prune: true # Delete resources not defined in Git
-#       selfHeal: true # Revert any manual changes to match Git state
-#     syncOptions:
-#       - CreateNamespace=true # Automatically create the destination namespace if it doesn't exist
+  # project: default # The Argo CD project your application belongs to
+  # source:
+    # repoURL: https://github.com/your-org/your-repo.git # URL of your Git repository
+    # targetRevision: HEAD # Branch or tag to deploy (e.g., 'main', 'v1.0')
+    # path: k8s-manifests # Path within the repository containing your Kubernetes manifests
+  # destination:
+    # server: https://kubernetes.default.svc # The Kubernetes API server URL
+    # namespace: my-app-namespace # The namespace in the target cluster where your app will be deployed
+  # syncPolicy:
+    # automated:
+      # prune: true # Delete resources not defined in Git
+      # selfHeal: true # Revert any manual changes to match Git state
+    # syncOptions:
+      # - CreateNamespace=true # Automatically create the destination namespace if it doesn't exist

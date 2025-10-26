@@ -41,8 +41,8 @@ log "Waiting for ArgoCD server deployment to be ready"
 kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
 
 # Set ArgoCD server to insecure mode to serve HTTP without TLS redirect
-log "Setting ArgoCD server to insecure mode"
-kubectl patch deployment argocd-server -n argocd --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/env", "value": [{"name": "ARGOCD_SERVER_INSECURE", "value": "true"}]}]'
+# log "Setting ArgoCD server to insecure mode"
+# kubectl patch deployment argocd-server -n argocd --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/env", "value": [{"name": "ARGOCD_SERVER_INSECURE", "value": "true"}]}]'
 
 # Default namespace for kubectl config must be set to argocd
 kubectl config set-context --current --namespace=argocd
@@ -55,14 +55,15 @@ if ! command -v argocd &> /dev/null; then
     rm argocd-linux-amd64
 fi
 
-
-argocd admin initial-password -n argocd
-
 kubectl config set-context --current --namespace=dev
 
 export KUBECONFIG="$(k3d kubeconfig write mfouadiCI)"
-kubectl apply -f /home/vagrant/app/confs/deploy.yaml
-kubectl apply -f app/confs/ingress.yaml
+# kubectl apply -f /home/vagrant/confs/deploy.yaml
+kubectl apply -f /home/vagrant/confs/ingress.yaml
+
+
+kubectl config set-context --current --namespace=argocd
+argocd admin initial-password -n argocd
 
 
 # kubectl apply -f /home/vagrant/app/confs/deploy.yaml
@@ -70,7 +71,7 @@ kubectl apply -f app/confs/ingress.yaml
 # kubectl apply -f /home/vagrant/app/confs/ingress.yaml" -n dev
 
 # # configure CLI access talk directly to kube API server instead of argocd API server 
-# argocd login --core
+argocd login --core
 
 # kubectl port-forward --address=0.0.0.0 svc/argocd-server -n argocd 8080:443 r
-# argocd app create guestbook --repo https://github.com/argoproj/argocd-example-apps.git --path guestbook --dest-server https://kubernetes.default.svc --dest-namespace default
+argocd app create will42 --repo https://github.com/Mushigarou/mfouadi-iot-app --path . --dest-server https://kubernetes.default.svc --dest-namespace dev --sync-policy automated
