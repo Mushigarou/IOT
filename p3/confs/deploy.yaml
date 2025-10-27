@@ -13,7 +13,7 @@ spec:
     namespace: dev
   syncPolicy:
     automated:
-      prune: true # Delete resources not defined in Git
-      selfHeal: true # Revert any manual changes to match Git state
+      prune: true 
+      selfHeal: true
     syncOptions:
       - CreateNamespace=true

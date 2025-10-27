@@ -6,7 +6,6 @@ HOST_SCRIPTS_PATH := ./scripts
 GUEST_CONFS_PATH := /home/vagrant/confs
 GUEST_SCRIPTS_PATH := /home/vagrant/scripts
 
-
 define uploadFilesToVM
 	$(eval FROM := $(1))
 	$(eval TO := $(2))
@@ -17,7 +16,6 @@ define uploadFilesToVM
 		else echo "No $(FROM) path, skipping"; \
 	fi
 endef
-
 
 all: up createDir sync provision
 
