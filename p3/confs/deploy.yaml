@@ -28,3 +28,5 @@
       # selfHeal: true # Revert any manual changes to match Git state
     # syncOptions:
       # - CreateNamespace=true # Automatically create the destination namespace if it doesn't exist
+
+
