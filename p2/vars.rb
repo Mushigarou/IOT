@@ -1,0 +1,3 @@
+NODE_SERVER_NAME = "mfouadiS"
+NODE_SERVER_IP = '192.168.56.110'
+HOME_DIRECTORY = '/home/vagrant'

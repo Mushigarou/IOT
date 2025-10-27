@@ -1,39 +1,32 @@
-def load_env(file_path)
-  if File.exist?(file_path)
-    File.readlines(file_path).each do |line|
-      key, value = line.strip.split('=', 2)
-      ENV[key.strip] = value.strip if key && value
-    end
-  end
-end
-
-load_env('../.env')
-
-SERVICES = {
-  "mfouadiS" => {
-    ip: ENV['SERVER_NODE_IP']
-  }
-}
-
-# puts ENV['SERVER_NODE_IP'], '<-- ENV --', SERVICES['mfouadiS'][:ip], '<-- SERVICES --'
+load 'vars.rb'
 
 Vagrant.configure("2") do |config|
-  config.vm.hostname = "mfouadiS"
-  config.vm.box = "ubuntu_24_server"
-  
+  config.vm.box = "centos/stream10"
+  config.vm.box_version = "20251020.0"
+  config.vm.box_check_update = false
+
   config.vm.provider "virtualbox" do |vm|
-    vm.name = "mfouadiS"
-    vm.customize ["modifyvm", :id, "--name", "mfouadiS"]
-    vm.cpus = 1
-end
-    vm.memory = 512
+    vm.name = NODE_SERVER_NAME
+    vm.customize ["modifyvm", :id, "--name", NODE_SERVER_NAME]
   end
 
-  config.vm.network "forwarded_port", guest: 8001, host: 8001
-
-  config.vm.network "private_network", ip: SERVICES['mfouadiS'][:ip] 
-
+  config.vm.define NODE_SERVER_NAME do |node|
+    node.vm.hostname = NODE_SERVER_NAME
+    node.vm.network "private_network", ip: NODE_SERVER_IP
+    node.vm.synced_folder ".", "/vagrant", disabled: true
+    node.vm.provider "virtualbox" do |v|
+      v.name = NODE_SERVER_NAME
+      v.memory = 2048
+      v.cpus = 2
+    end
+  end
+  
   config.vm.provision "shell",
-    name: "init-environment",
-    path: "./scripts/init.sh"
+    name: "init environement",
+    env: {
+      "NODE_SERVER_IP" => NODE_SERVER_IP,
+      "HOME_DIRECTORY" => HOME_DIRECTORY
+    },
+    path: "./scripts/init.sh" 
+
 end

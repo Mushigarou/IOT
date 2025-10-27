@@ -1,0 +1,1 @@
+- assign an IP to server 
