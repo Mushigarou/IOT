@@ -56,20 +56,22 @@ fi
 
 export KUBECONFIG="$(k3d kubeconfig write mfouadiCI)"
 
-kubectl apply -f /home/vagrant/confs/ingress.yaml
-
 kubectl config set-context --current --namespace=argocd
 
 # # configure CLI access talk directly to kube API server instead of argocd API server 
 argocd login --core
 
+# Apply argocd deployment of app and ingress for Argocd
+kubectl apply -f /home/vagrant/confs/ingress.yaml
+kubectl apply -f /home/vagrant/confs/deploy.yaml
 
-argocd app create will42 \
-    --repo https://github.com/Mushigarou/mfouadi-iot-app \
-    --path . \
-    --dest-server https://kubernetes.default.svc \
-    --dest-namespace dev \
-    --sync-policy automated
+# Alternative approach using CLI
+# argocd app create will42 \
+#     --repo https://github.com/Mushigarou/mfouadi-iot-app \
+#     --path . \
+#     --dest-server https://kubernetes.default.svc \
+#     --dest-namespace dev \
+#     --sync-policy automated
 
 argocd admin initial-password -n argocd
 
