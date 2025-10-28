@@ -1,0 +1,76 @@
+
+# App 1: 1 replica
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: will42-one
+  name: will42-one
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: will42-one
+  template:
+    metadata:
+      labels:
+        app: will42-one
+    spec:
+      containers:
+      - image: wil42/playground:v1
+        name: will42-one
+        ports:
+        - containerPort: 8888
+
+---
+
+# App 2: 3 replica
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: will42-two
+  name: will42-two
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: will42-two
+  template:
+    metadata:
+      labels:
+        app: will42-two
+    spec:
+      containers:
+      - image: wil42/playground:v2
+        name: will42-two
+        ports:
+        - containerPort: 8888
+
+---
+
+# App 3: 1 replica
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: will42-three
+  name: will42-three
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: will42-three
+  template:
+    metadata:
+      labels:
+        app: will42-three
+    spec:
+      containers:
+      - image: nginx:alpine
+        name: will42-three
+        ports:
+        - containerPort: 80

@@ -1,0 +1,64 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: will42-one
+  name: will42-one
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: app1.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: will42-one
+            port:
+              number: 7777
+
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: will42-two
+  name: will42-two
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: app2.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: will42-two
+            port:
+              number: 8888
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  labels:
+    app: will42-three
+  name: will42-three
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: app3.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: will42-three
+            port:
+              number: 9999

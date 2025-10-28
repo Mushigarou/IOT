@@ -22,11 +22,19 @@ Vagrant.configure("2") do |config|
   end
   
   config.vm.provision "shell",
-    name: "init environement",
+    name: "init environement...",
     env: {
       "NODE_SERVER_IP" => NODE_SERVER_IP,
       "HOME_DIRECTORY" => HOME_DIRECTORY
     },
     path: "./scripts/init.sh" 
+
+  config.vm.provision "shell",
+    name: "Deploy apps and services...",
+    env: {
+      "NODE_SERVER_IP" => NODE_SERVER_IP,
+      "HOME_DIRECTORY" => HOME_DIRECTORY
+    },
+    path: "./scripts/deploy.sh" 
 
 end

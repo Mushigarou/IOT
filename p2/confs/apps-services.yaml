@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: will42-one
+  name: will42-one
+spec:
+  ports:
+  - name: 7777-8888
+    port: 7777
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: will42-one
+  type: ClusterIP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app:  will42-two
+  name: will42-two
+spec:
+  ports:
+  - name: 8888-8888
+    port: 8888
+    protocol: TCP
+    targetPort: 8888
+  selector:
+    app: will42-two
+  type: ClusterIP
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app:  will42-three
+  name: will42-three
+spec:
+  ports:
+  - name: 9999-80
+    port: 9999
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: will42-three
+  type: ClusterIP
