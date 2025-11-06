@@ -881,3 +881,4 @@ https://www.youtube.com/watch?v=ePyFJ7Hd57Q&t=23s&ab_channel=GOTOConferences
 
 - https://github.com/canonical/multipass : 
 - https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+- https://stackoverflow.com/questions/36113556/vagrant-set-the-location-of-the-virtual-hard-drive-for-virtualbox

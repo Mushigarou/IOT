@@ -1,8 +1,10 @@
 load 'vars.rb'
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "centos/stream10"
-  config.vm.box_version = "20251020.0"
+  # config.vm.box = "bento/centos-stream-10"
+  # config.vm.box_version = "202510.26.0"
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_version = "202510.26.0"
   config.vm.box_check_update = false
 
   config.vm.provider "virtualbox" do |vm|

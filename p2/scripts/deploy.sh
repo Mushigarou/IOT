@@ -2,13 +2,13 @@
 set -e
 
 echo "Applying deployment..."
-kubectl apply -f /confs/deploy.yaml
+kubectl apply -f /home/vagrant/confs/deploy.yaml
 
 echo "Applying services..."
-kubectl apply -f /confs/apps-services.yaml
+kubectl apply -f /home/vagrant/confs/apps-services.yaml
 
 echo "Applying ingress..."
-kubectl apply -f /confs/ingress.yaml
+kubectl apply -f /home/vagrant/confs/ingress.yaml
 
 echo "Waiting briefly for resources to settle..."
 sleep 3

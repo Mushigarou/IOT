@@ -1,3 +1,6 @@
+set -e
+
+
 # Function to print logs
 log() {
     echo "[LOG] $1"
