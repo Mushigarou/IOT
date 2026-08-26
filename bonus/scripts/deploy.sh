@@ -7,7 +7,6 @@ CLUSTER=mfouadiCI
 ARGOCD_MANIFEST=https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 APP_REPO=https://github.com/Mushigarou/mfouadi-iot-app
 PROJECT=mfouadi-iot-app
-ROOT_PASSWORD=Zurich-Falcon-7714
 GITLAB_HOST=${GITLAB_URL#http://}
 
 log() { echo "[deploy] $*"; }
@@ -31,25 +30,13 @@ kubectl -n argocd rollout status deployment/argocd-server --timeout=300s
 log "waiting for GitLab to answer"
 until curl -fsSo /dev/null "$GITLAB_URL/users/sign_in"; do sleep 5; done
 
-# Known root password + an API token, then a public project Argo CD can clone.
-log "setting up the GitLab root account and project $PROJECT"
-TOKEN="glpat-$(openssl rand -hex 10)"
-gitlab-rails runner "
-u = User.find_by_username('root')
-u.password = u.password_confirmation = '$ROOT_PASSWORD'
-u.password_automatically_set = false
-u.save!
-u.personal_access_tokens.where(name: 'bootstrap').delete_all
-t = u.personal_access_tokens.new(name: 'bootstrap', expires_at: 300.days.from_now,
-                                 scopes: ['api', 'write_repository'])
-t.set_token('$TOKEN')
-t.save!
-unless Project.find_by_full_path('root/$PROJECT')
-  Projects::CreateService.new(u, name: '$PROJECT', path: '$PROJECT',
-    namespace_id: u.namespace.id,
-    visibility_level: Gitlab::VisibilityLevel::PUBLIC).execute
-end
-"
+# Public so Argo CD can clone it without credentials.
+log "creating the GitLab project $PROJECT"
+TOKEN=$(gitlab-rails runner "puts User.find_by_username('root').personal_access_tokens.create!(
+  name: 'deploy', expires_at: 300.days.from_now, scopes: ['api', 'write_repository']).token" \
+  | grep -oE 'glpat-\S+')
+curl -fsS --header "PRIVATE-TOKEN: $TOKEN" -X POST "$GITLAB_URL/api/v4/projects" \
+  --data "name=$PROJECT&path=$PROJECT&visibility=public" > /dev/null || true
 
 log "mirroring the part 3 app into GitLab"
 rm -rf /tmp/$PROJECT
@@ -64,7 +51,7 @@ kubectl -n argocd rollout status deployment/argocd-server --timeout=300s
 
 cat <<INFO
 
-  GitLab     $GITLAB_URL          root / $ROOT_PASSWORD
+  GitLab     $GITLAB_URL          root / $(awk '/^Password:/ {print $2}' /etc/gitlab/initial_root_password)
   Argo CD    $GITLAB_URL:8888     admin / $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
   will42     $GITLAB_URL:10000
 
