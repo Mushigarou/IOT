@@ -33,18 +33,18 @@ kubectl create namespace dev
 # Install argoCD in namespace argocd
 log "Installing argoCD in namespace argocd"
 kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd --server-side --force-conflicts -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 # Apply custom configmap for insecure mode
-kubectl apply -f /home/vagrant/confs/configmap.yaml
+# kubectl apply -f /home/vagrant/confs/configmap.yaml
 
-# Wait for ArgoCD to be ready
-log "Waiting for ArgoCD server deployment to be ready"
-kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+# # Wait for ArgoCD to be ready
+# log "Waiting for ArgoCD server deployment to be ready"
+# kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
 
 # Restart the deployment to pick up the configmap changes
 kubectl rollout restart deployment argocd-server -n argocd
-kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+kubectl wait --for=condition=available  deployment/argocd-server -n argocd
 
 # Set default namespace for kubectl to argocd
 kubectl config set-context --current --namespace=argocd
@@ -65,7 +65,7 @@ kubectl config set-context --current --namespace=argocd
 argocd login --core
 
 # Apply argocd deployment of app and ingress for Argocd
-kubectl apply -f /home/vagrant/confs/ingress.yaml
+# kubectl apply -f /home/vagrant/confs/ingress.yaml
 kubectl apply -f /home/vagrant/confs/deploy.yaml
 
 # Alternative approach using CLI

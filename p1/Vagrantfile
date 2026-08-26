@@ -18,15 +18,15 @@ load_env_file('../.env')
 
 SERVICES = {
   "mfouadiS" => {
-    ip: ENV['SERVER_NODE_IP']
+    ip: "192.168.56.110"
   },
   'mfouadiSW' => {
-    ip: ENV['SERVER_AGENT_NODE_IP']
+    ip: "192.168.56.111"
   }
 } 
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu_24_server"
+  config.vm.box = "bento/ubuntu-24.04"
 
   config.vm.provider "virtualbox" do |v|
     v.memory = 512
@@ -67,12 +67,12 @@ Vagrant.configure("2") do |config|
       path: "scripts/common-dependencies.sh"
     mfouadiSW.vm.provision "shell",
       name: "install-k3s-agent",
-      path: "scripts/install-k3s-agent.sh",
-      env: {
-        "K3S_SERVER_TOKEN" => ENV['K3S_SERVER_TOKEN'],
-        "SERVER_AGENT_NODE_IP" => ENV['SERVER_AGENT_NODE_IP'],
-        "K3S_SERVER_URL" => "https://#{ENV['SERVER_NODE_IP']}:6443"
-      }
+      path: "scripts/install-k3s-agent.sh"
+      # env: {
+      #   "K3S_SERVER_TOKEN" => ENV['K3S_SERVER_TOKEN'],
+      #   "SERVER_AGENT_NODE_IP" => ENV['SERVER_AGENT_NODE_IP'],
+      #   "K3S_SERVER_URL" => "https://#{ENV['SERVER_NODE_IP']}:6443"
+      # }
 
   end
 

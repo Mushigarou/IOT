@@ -1,7 +1,7 @@
 set -e
 
 sudo apt update
-sudo apt upgrade -y
+# sudo apt upgrade -y
 
 # https://docs.docker.com/engine/install/centos/#install-using-the-repository
 # install docker
