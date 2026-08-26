@@ -1,0 +1,63 @@
+# Namespace holding the application deployed by Argo CD.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+
+---
+# Dedicated namespace for GitLab, required by the bonus.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gitlab
+
+---
+# Serve the Argo CD API/UI in plain HTTP so Traefik can proxy it without TLS.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+data:
+  server.insecure: "true"
+
+---
+# Publish the Argo CD UI on port 8080.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: argocd
+spec:
+  ingressClassName: traefik
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 80
+
+---
+# Same app as part 3, but synced from the local GitLab instead of GitHub.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: will42
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://192.168.56.120/root/mfouadi-iot-app.git
+    targetRevision: main
+    path: .
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

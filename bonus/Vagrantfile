@@ -1,0 +1,27 @@
+# GitLab CE + the part 3 cluster in one VM. GitLab needs the extra CPU/RAM.
+VM_NAME = "gitlab"
+VM_IP   = "192.168.56.120"
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_version = "202510.26.0"
+  config.vm.box_check_update = false
+
+  config.vm.define VM_NAME do |node|
+    node.vm.hostname = VM_NAME
+    node.vm.network "private_network", ip: VM_IP
+    node.vm.synced_folder ".", "/vagrant", disabled: true
+
+    node.vm.provider "virtualbox" do |v|
+      v.name = VM_NAME
+      v.memory = 8192
+      v.cpus = 4
+    end
+
+    node.vm.provision "shell", name: "install tools", path: "scripts/init.sh",
+      env: { "GITLAB_URL" => "http://#{VM_IP}" }
+    node.vm.provision "file", source: "confs/.", destination: "/home/vagrant/confs"
+    node.vm.provision "shell", name: "deploy apps", path: "scripts/deploy.sh",
+      env: { "GITLAB_URL" => "http://#{VM_IP}" }
+  end
+end
