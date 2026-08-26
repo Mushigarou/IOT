@@ -1,5 +1,5 @@
 #!/bin/bash
-# Installs everything K3d needs: Docker, kubectl and K3d itself.
+# Installs Docker, kubectl and k3d. Run with sudo.
 set -e
 
 log() { echo "[init] $*"; }
@@ -7,7 +7,7 @@ log() { echo "[init] $*"; }
 if ! command -v docker &> /dev/null; then
     log "installing Docker"
     curl -fsSL https://get.docker.com | sh
-    usermod -aG docker vagrant
+    usermod -aG docker "${SUDO_USER:-$USER}"
 fi
 
 # https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/

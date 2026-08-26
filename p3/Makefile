@@ -1,17 +1,14 @@
-all: up
+all: install deploy
 
-up:
-	vagrant up
+install:
+	sudo ./scripts/init.sh
 
-provision:
-	vagrant provision
+deploy:
+	sudo ./scripts/deploy.sh
 
-ssh:
-	vagrant ssh
-
-clean fclean:
-	vagrant destroy -f
+clean:
+	sudo k3d cluster delete mfouadiCI
 
 re: clean all
 
-.PHONY: all up provision ssh clean fclean re
+.PHONY: all install deploy clean re
