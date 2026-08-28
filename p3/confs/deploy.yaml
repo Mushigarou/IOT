@@ -1,11 +1,11 @@
-# Namespace holding the application deployed by Argo CD.
+# dev namespace, Argo CD UI ingress, and the Application Argo CD syncs.
 apiVersion: v1
 kind: Namespace
 metadata:
   name: dev
 
 ---
-# Serve the Argo CD API/UI in plain HTTP so Traefik can proxy it without TLS.
+# Serve Argo CD in plain HTTP, so Traefik can proxy it without TLS.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -15,14 +15,13 @@ data:
   server.insecure: "true"
 
 ---
-# Publish the Argo CD UI on http://localhost:8080
+# Argo CD UI on http://localhost:8080
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: argocd-ingress
   namespace: argocd
 spec:
-  ingressClassName: traefik
   rules:
   - http:
       paths:

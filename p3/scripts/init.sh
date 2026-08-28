@@ -7,7 +7,7 @@ log() { echo "[init] $*"; }
 if ! command -v docker &> /dev/null; then
     log "installing Docker"
     curl -fsSL https://get.docker.com | sh
-    usermod -aG docker "${SUDO_USER:-$USER}"
+    usermod -aG docker vagrant
 fi
 
 # https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/

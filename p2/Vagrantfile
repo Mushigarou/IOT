@@ -1,4 +1,6 @@
-load 'vars.rb'
+NODE_SERVER_NAME = "mfouadiSyt"
+NODE_SERVER_IP = '192.168.56.110'
+HOME_DIRECTORY = '/home/vagrant'
 
 Vagrant.configure("2") do |config|
   # config.vm.box = "bento/centos-stream-10"

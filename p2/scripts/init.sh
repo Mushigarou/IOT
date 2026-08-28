@@ -3,7 +3,7 @@
 set -e
 
 sudo apt update
-sudo apt upgrade -y
+# sudo apt upgrade -y
 
 # Add /usr/local/bin in PATH for the vagrant user
 echo "[LOG] Exporting /usr/local/bin path to PATH env variable"
